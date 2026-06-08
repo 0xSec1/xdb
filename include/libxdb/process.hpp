@@ -8,6 +8,7 @@ Using unique_ptr that manage memory allocation
 #include <filesystem>
 #include <memory>
 #include <sys/types.h>
+#include <cstdint>
 
 namespace xdb{
     //tracks current running state
@@ -16,6 +17,14 @@ namespace xdb{
         running,
         exited,
         terminated
+    };
+
+    //return info about signal that occurred
+    struct stop_reason{
+        stop_reason(int wait_status);
+
+        process_state reason;
+        std::uint8_t info;
     };
 
     class process{
@@ -33,7 +42,7 @@ namespace xdb{
         process_state state() const{ return state_; }   //returns current state
 
         void resume();
-        void wait_on_signal();
+        stop_reason wait_on_signal();
         pid_t pid() const{ return pid_; }
 
     private:
