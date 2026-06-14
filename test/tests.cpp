@@ -40,10 +40,36 @@ TEST_CASE("process::attach success", "[process]"){
     REQUIRE(get_process_status(target->pid()) == 't');
 }
 
+TEST_CASE("process::resume success", "[process]"){
+    {
+        auto proc = process::launch("target/run_immediately");
+        proc->resume();
+        auto status = get_process_status(proc->pid());
+        auto success = (status == 'R' or status == 'S');
+        REQUIRE(success);
+    }
+
+    {
+        auto target = process::launch("target/run_immediately", false);
+        auto proc = process::attach(target->pid());
+        proc->resume();
+        auto status = get_process_status(proc->pid());
+        auto success = (status == 'R' or status == 'S');
+        REQUIRE(success);
+    }
+}
+
 TEST_CASE("process::launch no such program", "[process]"){
     REQUIRE_THROWS_AS(process::launch("you_not_good"), error);
 }
 
 TEST_CASE("process::attach invalid PID", "[process]"){
     REQUIRE_THROWS_AS(process::attach(0), error);
+}
+
+TEST_CASE("process::resume already terminated", "[process]"){
+    auto proc = process::launch("target/run_immediately");
+    proc->resume();
+    proc->wait_on_signal();
+    REQUIRE_THROWS_AS(proc->resume(), error);
 }
